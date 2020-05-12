@@ -1,0 +1,18 @@
+ul {
+  border: 3px solid black;
+  margin: 0;
+  padding: 0;
+
+  list-style-type: none;
+}
+
+li {
+  width: 320px;
+  height: 48px;
+
+  background-color: white;
+}
+
+li:nth-child(odd) {
+  background-color: seashell;
+}

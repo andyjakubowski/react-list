@@ -11,7 +11,9 @@ class List extends React.Component {
     return (
       <ul>
         {items.map((item) => (
-          <li>{item.text}</li>
+          <li>
+            {item.text}, orderId: {item.orderId}
+          </li>
         ))}
       </ul>
     );
