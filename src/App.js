@@ -1,11 +1,12 @@
 import React from "react";
 import "./App.css";
 import List from "./List";
+import items from "./seeds";
 
 function App() {
   return (
     <div className="App">
-      <List />
+      <List items={items} />
     </div>
   );
 }

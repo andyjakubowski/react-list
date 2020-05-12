@@ -7,11 +7,12 @@ class List extends React.Component {
   }
 
   render() {
+    const { items } = this.props;
     return (
       <ul>
-        <li>Hello</li>
-        <li>Mighty</li>
-        <li>World!</li>
+        {items.map((item) => (
+          <li>{item.text}</li>
+        ))}
       </ul>
     );
   }
