@@ -1,23 +1,28 @@
 const items = [
   {
     id: 100,
-    orderId: 1,
-    text: "Apples",
+    orderId: 3,
+    text: "🍏 Apples",
   },
   {
     id: 200,
-    orderId: 2,
-    text: "Oranges",
+    orderId: 1,
+    text: "🍊 Oranges",
+  },
+  {
+    id: 200,
+    orderId: 5,
+    text: "🍍 Pineapple",
   },
   {
     id: 300,
-    orderId: 3,
-    text: "Eggs",
+    orderId: 8,
+    text: "🥚 Eggs",
   },
   {
     id: 400,
-    orderId: 4,
-    text: "Yoghurt",
+    orderId: -20,
+    text: "🥑 Avocado",
   },
 ];
 
