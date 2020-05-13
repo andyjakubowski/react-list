@@ -1,7 +1,9 @@
 ul {
-  border: 3px solid black;
+  /* border: 3px solid black; */
   margin: 0;
   padding: 0;
+
+  background-color: teal;
 
   list-style-type: none;
   user-select: none;
@@ -11,16 +13,20 @@ li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 320px;
+  width: 400px;
   height: 50px;
 
   background-color: white;
+  background-image: url("./grid-white.png");
+  background-size: 100px;
 
   cursor: pointer;
 }
 
 li:nth-child(odd) {
   background-color: seashell;
+  background-image: url("./grid-seashell.png");
+  background-size: 100px;
 }
 
 li.dragged {

@@ -1,8 +1,11 @@
 .App {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  padding-block-start: 100px;
   height: 100vh;
 
   background-color: thistle;
+  background-image: url("./grid-thistle.png");
+  background-size: 100px;
 }
