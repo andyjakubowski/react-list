@@ -23,15 +23,11 @@ li {
   cursor: pointer;
 }
 
-li:nth-child(odd) {
-  background-color: seashell;
-  background-image: url("./grid-seashell.png");
-  background-size: 100px;
-}
-
 li.dragged {
   position: relative;
 
+  z-index: 300;
+
   box-shadow: 0 2px 16px red;
-  opacity: 0.9;
+  opacity: 0.95;
 }

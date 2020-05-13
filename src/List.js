@@ -55,6 +55,7 @@ class List extends React.Component {
     };
 
     this.listDomRef = React.createRef();
+    this.itemRefs = {};
 
     this.handleUpClick = this.handleUpClick.bind(this);
     this.handleDownClick = this.handleDownClick.bind(this);
@@ -236,6 +237,61 @@ class List extends React.Component {
     }
   }
 
+  getBoundingRects(items) {
+    return items.reduce((boundingRects, item) => {
+      const domNode = this.itemRefs[item.id].current;
+      const boundingRect = domNode.getBoundingClientRect();
+      return { ...boundingRects, [item.id]: boundingRect };
+    }, {});
+  }
+
+  didItemOrderChange(itemsA, itemsB) {
+    for (let i = 0; i < itemsA.length; i += 1) {
+      if (itemsA[i].id !== itemsB[i].id) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  getSnapshotBeforeUpdate(prevProps, prevState) {
+    const orderChanged = this.didItemOrderChange(
+      prevState.items,
+      this.state.items
+    );
+    if (orderChanged) {
+      console.log("getSnapshotBeforeUpdate");
+      return this.getBoundingRects(prevState.items);
+    } else {
+      return null;
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (!snapshot) {
+      return;
+    }
+
+    console.log("componentDidUpdate");
+    const prevRects = snapshot;
+    const nextRects = this.getBoundingRects(prevState.items);
+    prevState.items.forEach((item) => {
+      const domNode = this.itemRefs[item.id].current;
+      const nextRect = nextRects[item.id];
+      const prevRect = prevRects[item.id];
+      const deltaY = prevRect.top - nextRect.top;
+      requestAnimationFrame(() => {
+        domNode.style.transform = `translate(0, ${deltaY}px)`;
+        domNode.style.transition = "transform 0s";
+        requestAnimationFrame(() => {
+          domNode.style.transform = "";
+          domNode.style.transition = "transform 500ms";
+        });
+      });
+    });
+  }
+
   render() {
     const { items, dragItemId, dragItemRelativeOffsetTop } = this.state;
     return (
@@ -245,27 +301,32 @@ class List extends React.Component {
         onPointerCancel={this.handlePointerCancel}
         onPointerMove={this.handlePointerMove}
       >
-        {items.map((item, index) => (
-          <li
-            id={item.text}
-            key={item.text}
-            onPointerDown={(e) => this.handlePointerDown(e, item.id, index)}
-            className={item.id === dragItemId ? "dragged" : ""}
-            style={
-              item.id === dragItemId
-                ? { top: `${dragItemRelativeOffsetTop}px` }
-                : {}
-            }
-          >
-            {item.text}, orderId: {item.orderId}
-            <span onClick={(e) => this.handleUpClick(e, item.text, index)}>
-              Up
-            </span>
-            <span onClick={(e) => this.handleDownClick(e, item.text, index)}>
-              Down
-            </span>
-          </li>
-        ))}
+        {items.map((item, index) => {
+          this.itemRefs[item.id] = this.itemRefs[item.id] || React.createRef();
+
+          return (
+            <li
+              id={item.text}
+              ref={this.itemRefs[item.id]}
+              key={item.text}
+              onPointerDown={(e) => this.handlePointerDown(e, item.id, index)}
+              className={item.id === dragItemId ? "dragged" : ""}
+              style={
+                item.id === dragItemId
+                  ? { top: `${dragItemRelativeOffsetTop}px` }
+                  : {}
+              }
+            >
+              {item.text}, orderId: {item.orderId}
+              <span onClick={(e) => this.handleUpClick(e, item.text, index)}>
+                Up
+              </span>
+              <span onClick={(e) => this.handleDownClick(e, item.text, index)}>
+                Down
+              </span>
+            </li>
+          );
+        })}
       </ul>
     );
   }
