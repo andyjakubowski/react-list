@@ -28,6 +28,16 @@ function getTopRelativeToParent(
   return cursorPageY - parentTopEdgeY - elementTopEdgeOffsetY;
 }
 
+function getCoords(element) {
+  const rect = element.getBoundingClientRect();
+  const scrollY = window.scrollY;
+
+  return {
+    top: rect.top + scrollY,
+    height: rect.height,
+  };
+}
+
 class List extends React.Component {
   constructor(props) {
     super(props);
@@ -68,6 +78,10 @@ class List extends React.Component {
       listTop,
       listHeight,
     });
+  }
+
+  getListElement() {
+    return this.listDomRef.current;
   }
 
   reorderItems(items, currentIndex, newIndex) {
@@ -142,7 +156,7 @@ class List extends React.Component {
 
   handlePointerDown(e, itemId, itemIndex) {
     const offsetY = e.nativeEvent.offsetY;
-    const { height, top } = e.target.getBoundingClientRect();
+    const { height, top } = getCoords(e.target);
     const args = {
       itemId,
       itemIndex,
@@ -179,8 +193,10 @@ class List extends React.Component {
       dragItemHeight,
       dragItemTop,
       dragItemIndex,
-      listTop,
     } = this.state;
+
+    const listElement = this.getListElement();
+    const { top: listTop } = getCoords(listElement);
 
     const itemTopRelativeToParent = getTopRelativeToParent(
       e.pageY,
