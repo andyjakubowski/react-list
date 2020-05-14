@@ -43,18 +43,15 @@ class List extends React.Component {
     super(props);
 
     this.state = {
-      items: props.items.sort((itemA, itemB) => itemA.orderId - itemB.orderId),
       isDragging: false,
       dragItemId: null,
       dragItemHeight: null,
       dragItemTop: null,
       dragItemTopEdgeOffsetY: null,
       dragItemRelativeOffsetTop: null,
-      listTop: null,
-      listHeight: null,
     };
 
-    this.listDomRef = React.createRef();
+    this.listRef = React.createRef();
     this.itemRefs = {};
 
     this.handleUpClick = this.handleUpClick.bind(this);
@@ -65,68 +62,33 @@ class List extends React.Component {
     this.handlePointerMove = this.handlePointerMove.bind(this);
   }
 
-  componentDidMount() {
-    this.saveListDomRectToState();
-  }
-
-  saveListDomRectToState() {
-    const listDomElement = this.listDomRef.current;
-    const {
-      top: listTop,
-      height: listHeight,
-    } = listDomElement.getBoundingClientRect();
-    this.setState({
-      listTop,
-      listHeight,
-    });
-  }
-
-  getListElement() {
-    return this.listDomRef.current;
-  }
-
-  reorderItems(items, currentIndex, newIndex) {
-    const reorderedItems = move(items, currentIndex, newIndex);
-    let maxOrderId = null;
-
-    return reorderedItems.map((item) => {
-      if (maxOrderId === null) {
-        maxOrderId = item.orderId;
-      } else if (maxOrderId >= item.orderId) {
-        maxOrderId += 1;
-      } else {
-        maxOrderId = item.orderId;
-      }
-
-      return { ...item, orderId: maxOrderId };
-    });
-  }
-
   handleUpClick(e, text, index) {
-    console.log(`handleUpClick, ${text}, index: ${index}`);
     const currentIndex = index;
     const newIndex = Math.max(0, index - 1);
-    const reorderedItems = this.reorderItems(
-      this.state.items,
-      currentIndex,
-      newIndex
+    console.log(
+      `${text} moving from index ${currentIndex} to index ${newIndex}`
     );
-    this.setState({
-      items: reorderedItems,
-    });
+    this.props.onOrderChange(currentIndex, newIndex);
   }
 
   handleDownClick(e, text, index) {
-    console.log(`handleDownClick, ${text}, index: ${index}`);
     const currentIndex = index;
-    const newIndex = Math.min(index + 1, this.state.items.length - 1);
-    const reorderedItems = this.reorderItems(
-      this.state.items,
-      currentIndex,
-      newIndex
+    const newIndex = Math.min(index + 1, this.props.items.length - 1);
+    console.log(
+      `${text} moving from index ${currentIndex} to index ${newIndex}`
     );
+    this.props.onOrderChange(currentIndex, newIndex);
+  }
+
+  startDrag({ itemId, offsetY, height, top, itemIndex }) {
+    console.log("startDrag");
     this.setState({
-      items: reorderedItems,
+      isDragging: true,
+      dragItemId: itemId,
+      dragItemHeight: height,
+      dragItemTop: top,
+      dragItemTopEdgeOffsetY: offsetY,
+      dragItemIndex: itemIndex,
     });
   }
 
@@ -140,18 +102,6 @@ class List extends React.Component {
       dragItemTopEdgeOffsetY: null,
       dragItemIndex: null,
       dragItemRelativeOffsetTop: null,
-    });
-  }
-
-  startDrag({ itemId, offsetY, height, top, itemIndex }) {
-    console.log("startDrag");
-    this.setState({
-      isDragging: true,
-      dragItemId: itemId,
-      dragItemHeight: height,
-      dragItemTop: top,
-      dragItemTopEdgeOffsetY: offsetY,
-      dragItemIndex: itemIndex,
     });
   }
 
@@ -189,14 +139,13 @@ class List extends React.Component {
       return;
     }
     const {
-      items,
       dragItemTopEdgeOffsetY,
       dragItemHeight,
       dragItemTop,
       dragItemIndex,
     } = this.state;
 
-    const listElement = this.getListElement();
+    const listElement = this.listRef.current;
     const { top: listTop } = getCoords(listElement);
 
     const itemTopRelativeToParent = getTopRelativeToParent(
@@ -207,7 +156,7 @@ class List extends React.Component {
     const newIndex = calculateIndex(
       itemTopRelativeToParent,
       dragItemHeight,
-      items.length - 1
+      this.props.items.length - 1
     );
 
     if (newIndex === dragItemIndex) {
@@ -218,18 +167,12 @@ class List extends React.Component {
         dragItemRelativeOffsetTop,
       });
     } else {
-      console.log(`Index ${dragItemIndex} → ${newIndex}`);
       const newDragItemTop = newIndex * dragItemHeight + listTop;
       const dragItemRelativeOffsetTop =
         e.pageY - newDragItemTop - dragItemTopEdgeOffsetY;
-      const reorderedItems = this.reorderItems(
-        this.state.items,
-        dragItemIndex,
-        newIndex
-      );
 
+      this.props.onOrderChange(dragItemIndex, newIndex);
       this.setState({
-        items: reorderedItems,
         dragItemRelativeOffsetTop,
         dragItemTop: newDragItemTop,
         dragItemIndex: newIndex,
@@ -257,12 +200,12 @@ class List extends React.Component {
 
   getSnapshotBeforeUpdate(prevProps, prevState) {
     const orderChanged = this.didItemOrderChange(
-      prevState.items,
-      this.state.items
+      prevProps.items,
+      this.props.items
     );
     if (orderChanged) {
       console.log("getSnapshotBeforeUpdate");
-      return this.getBoundingRects(prevState.items);
+      return this.getBoundingRects(prevProps.items);
     } else {
       return null;
     }
@@ -275,8 +218,8 @@ class List extends React.Component {
 
     console.log("componentDidUpdate");
     const prevRects = snapshot;
-    const nextRects = this.getBoundingRects(prevState.items);
-    prevState.items.forEach((item) => {
+    const nextRects = this.getBoundingRects(prevProps.items);
+    prevProps.items.forEach((item) => {
       const domNode = this.itemRefs[item.id].current;
       const nextRect = nextRects[item.id];
       const prevRect = prevRects[item.id];
@@ -293,10 +236,11 @@ class List extends React.Component {
   }
 
   render() {
-    const { items, dragItemId, dragItemRelativeOffsetTop } = this.state;
+    const { dragItemId, dragItemRelativeOffsetTop } = this.state;
+    const { items } = this.props;
     return (
       <ul
-        ref={this.listDomRef}
+        ref={this.listRef}
         onPointerUp={this.handlePointerUp}
         onPointerCancel={this.handlePointerCancel}
         onPointerMove={this.handlePointerMove}
